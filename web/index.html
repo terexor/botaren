@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- Botaren visualmente por GGM. -->
+<html lang="es">
+	<head>
+		<meta charset="utf-8">
+		<meta name="theme-color" content="#75a283"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+		<meta name="description" content="Bot para atender ventas" />
+		<title>Compra de jeans a través de un simple bot</title>
+		<link rel="shortcut icon" href="/favicon.ico">
+		<link rel="apple-touch-icon" href="/img/logo-192-apple.png">
+		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+		<link data-senna-track="permanent" rel="stylesheet" href="css/bootstrap.min.css">
+		<link data-senna-track="permanent" rel="stylesheet" href="css/notiflix-2.7.0.min.css">
+		<link data-senna-track="permanent" rel="stylesheet" href="css/botaren.css">
+	</head>
+	<body>
+		<div class="container">
+			<div class="messaging">
+				<div class="inbox_msg">
+					<div class="inbox_people">
+						<div class="headind_srch">
+							<div class="recent_heading">
+								<h4>Botaren</h4>
+							</div>
+							<div class="srch_bar">
+								<div class="stylish-input-group">
+									<input type="text" class="search-bar"  placeholder="Search" >
+									<span class="input-group-addon">
+									<button type="button"> <i class="fa fa-search" aria-hidden="true"></i> </button>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="inbox_chat">
+							<div class="chat_list active_chat">
+								<div class="chat_people">
+									<div class="chat_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
+									<div class="chat_ib">
+										<h5>Sunil Rajput <span class="chat_date">Dec 25</span></h5>
+										<p>Test, which is a new approach to have all solutions
+											astrology under one roof.
+										</p>
+									</div>
+								</div>
+							</div>
+							<div class="chat_list">
+								<div class="chat_people">
+									<div class="chat_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
+									<div class="chat_ib">
+										<h5>Sunil Rajput <span class="chat_date">Dec 25</span></h5>
+										<p>Test, which is a new approach to have all solutions
+											astrology under one roof.
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="mesgs">
+						<div class="msg_history" id="historial"></div>
+						<div class="type_msg">
+							<div class="input_msg_write">
+								<input type="text" class="write_msg" placeholder="Mensaje para Botaren" id="mensajero" onkeypress="if(event.keyCode == 13)botaren.teclear()" />
+								<button class="msg_send_btn" type="button" onclick="botaren.teclear()"><i class="fa fa-paper-plane-o" aria-hidden="true"></i></button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script data-senna-track="permanent" src="js/reconnecting-websocket.min.js" defer></script>
+		<script data-senna-track="permanent" src="js/notiflix-2.7.0.min.js" defer></script>
+		<script data-senna-track="permanent" src="js/botaren.js" defer></script>
+	</body>
+</html>

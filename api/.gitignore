@@ -1,0 +1,4 @@
+*.lock
+vendor/
+#Archivos confidenciales
+dialogflow-client-secret.json

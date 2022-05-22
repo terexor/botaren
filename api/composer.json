@@ -1,0 +1,19 @@
+{
+	"authors": [
+		{
+			"name": "Garmur",
+			"email": "ggm.forall@pisfato.com"
+		}
+	],
+	"description": "Conversación con Botaren",
+	"autoload": {
+		"psr-4": {
+			"Botaren\\": "src",
+			"JWT\\": "src"
+		}
+	},
+    "require": {
+        "google/cloud-dialogflow": "^0.27.0",
+        "cboden/ratchet": "^0.4.4"
+    }
+}
