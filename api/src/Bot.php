@@ -13,11 +13,13 @@ class Bot implements MessageComponentInterface {
 
 	public function __construct() {
 		$this->sessionsClient = new SessionsClient( array('credentials' => 'dialogflow-client-secret.json') );
+		$this->bd = new \mysqli("localhost", "root", "clave", "botaren");
 		echo("Bot encendido.\n");
 	}
 
 	public function __destruct() {
 		$this->sessionsClient->close();
+		$this->bd->close();
 		echo("Bot apagado.\n");
 	}
 
@@ -33,6 +35,8 @@ class Bot implements MessageComponentInterface {
 		$respuesta['action'] = $datos['action'];
 
 		try {
+			//Del 10 al 999 son acciones de ida y vuelta.
+			//Del 1000 hacia arriba son asíncronas.
 			switch($datos['action']) {
 				case 10:
 					$respuesta['cheveridad'] = true;
@@ -53,8 +57,6 @@ class Bot implements MessageComponentInterface {
 
 			$from->send( json_encode( $respuesta ) );
 		}
-
-		//~ detect_intent_texts('karen-fnkq', $mensaje,'930793 94770');
 	}
 
 	public function onClose(ConnectionInterface $conn) {
@@ -97,11 +99,51 @@ class Bot implements MessageComponentInterface {
 			//~ printf('Fulfilment text: %s' . PHP_EOL, $fulfilmentText);
 
 			//~ $sessionsClient->close();
+
+			$this->procesarSalida( $intent );
+
 			return $fulfilmentText;
 		}
 		catch(Exception $e) {
 			echo $e-what();
 			return null;
 		}
+	}
+
+	private function procesarSalida( $intent ) {
+		switch( $intent ) {
+			case 'bot.producto.muestra':
+				$this->mostrarProductos( $modelo, $talla, $color, $precio );
+				break;
+			default:
+				//mostrar inconsistencia
+	}
+
+	/**
+	 * Manda al cliente una lista de productos.
+	 * Esa lista puede contener uno o más productos.
+	 */
+	private function mostrarProductos( $modelo, $talla, $color, $precio ) {
+		$sentenciaSeleccionadora = $bd->prepare('SELECT campo1, campo2 FROM Tabla WHERE condicionInt = ?, condicionString = ?');
+		$sentenciaSeleccionadora->bind_param('is', $condicionInt, $condicionString);
+		$resultado = $sentenciaSeleccionadora->execute();
+		if($resultado) {
+			//Ejecución correcta
+			$resultado = $sentenciaSeleccionadora->get_result();
+			while($fila = $resultado->fetch_assoc()) {
+				$variableParaCampo1 = $fila['campo1'];
+				$variableParaCampo2 = $fila['campo2'];
+
+				$respuesta['cheveridad'] = true;
+				$respuesta['action'] = 1000;
+				$respuesta['params']['producto']['modelo'] = 'No existe opción';
+			}
+		}
+		else {
+			//'No se encontró nada.'
+		}
+		$sentenciaSeleccionadora->close();
+
+		$from->send( json_encode( $respuesta ) );
 	}
 }

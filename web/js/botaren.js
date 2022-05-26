@@ -1,5 +1,5 @@
 var botaren
-const esRemoto = true
+const esRemoto = false
 var Botaren = function() {
 	console.log("Botarenizado")
 	var conn
@@ -59,7 +59,13 @@ var Botaren = function() {
 		return true
 	}
 
-	var manejarMensaje = function(parametros) {
+	/**
+	 * @param anexo es el tipo de objeto que se puede añadir:
+	 *  anexo 1: producto,
+	 *  anexo 2: audio,
+	 *  anexo 3: sticker
+	 */
+	var manejarMensaje = function(parametros, anexo) {
 		const outgoingMessage = document.createElement("div")
 		outgoingMessage.setAttribute("class", "outgoing_msg")
 		const photo = document.createElement("div")
@@ -75,6 +81,15 @@ var Botaren = function() {
 		const receivedMessage = document.createElement("div")
 		receivedMessage.setAttribute("class", "received_withd_msg")
 		message.appendChild(receivedMessage)
+
+		switch(anexo) {
+			case 1:
+				const product = document.createElement("img")
+				product.src = "img/1.jpg"
+				product.alt = "imagen de jean"
+				receivedMessage.appendChild(product)
+				break
+		}
 
 		const text = document.createElement("p")
 		if(!esRemoto) {
@@ -139,7 +154,3 @@ window.onload = function() {
 		botaren.enlazar()
 	}
 }
-
-//~ function Enter() {
-	//~ if(event.keyCode == 13){botaren.teclear();return true}return false
-//~ }
