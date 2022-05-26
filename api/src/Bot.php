@@ -39,9 +39,10 @@ class Bot implements MessageComponentInterface {
 			//Del 1000 hacia arriba son asíncronas.
 			switch($datos['action']) {
 				case 10:
-					$respuesta['cheveridad'] = true;
-					$respuesta['params']['texto'] = $this->detect_intent_texts('karen-fnkq', $datos['params']['texto'],'930793 94770');
-					$from->send( json_encode( $respuesta ) );
+					//~ $respuesta['cheveridad'] = true;
+					$queryResult = $this->detectIntentTexts('karen-fnkq', $datos['params']['texto'],'930793 94770rr');
+					$this->procesarSalida( $queryResult, $from, $respuesta );
+					//~ $from->send( json_encode( $respuesta ) );
 					return;
 				default:
 					$respuesta['cheveridad'] = false;
@@ -65,7 +66,7 @@ class Bot implements MessageComponentInterface {
 	public function onError(ConnectionInterface $conn, \Exception $e) {
 	}
 
-	private function detect_intent_texts($projectId, $text, $sessionId, $languageCode = 'es-PE') {
+	private function detectIntentTexts($projectId, $text, $sessionId, $languageCode = 'es-PE') {
 		// new session
 		try {
 			//~ $sessionsClient = new SessionsClient( array('credentials' => 'dialogflow-client-secret.json') );
@@ -99,23 +100,28 @@ class Bot implements MessageComponentInterface {
 			//~ printf('Fulfilment text: %s' . PHP_EOL, $fulfilmentText);
 
 			//~ $sessionsClient->close();
+			echo "/ntipo: " . $queryResult->getOutputContexts()->getType();
+			echo "/nclase: " . $queryResult->getOutputContexts()->getClass();
+			echo "/ncuenta: " . $queryResult->getOutputContexts()->count();
 
-			$this->procesarSalida( $intent );
-
-			return $fulfilmentText;
+			return $queryResult;
 		}
 		catch(Exception $e) {
-			echo $e-what();
+			echo $e->what();
 			return null;
 		}
 	}
 
-	private function procesarSalida( $intent ) {
-		switch( $intent ) {
-			case 'bot.producto.muestra':
+	private function procesarSalida( $queryResult, $from, &$respuesta ) {
+		$respuesta['cheveridad'] = true;
+		$respuesta['params']['texto'] = $queryResult->getFulfillmentText();
+		$from->send( json_encode( $respuesta ) );
+		return;
+		//~ switch( $intent ) {
+			//~ case 'bot.producto.muestra':
 				$this->mostrarProductos( $modelo, $talla, $color, $precio );
-				break;
-			default:
+				//~ break;
+			//~ default:
 				//mostrar inconsistencia
 	}
 
