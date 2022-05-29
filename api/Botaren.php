@@ -17,6 +17,7 @@ $oc = new OriginCheck(
 	)
 );
 $oc->allowedOrigins[] = 'localhost';
+$oc->allowedOrigins[] = '192.168.1.46';
 
 $app = new HttpServer($oc);
 

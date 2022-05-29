@@ -60,12 +60,12 @@ var Botaren = function() {
 	}
 
 	/**
-	 * @param anexo es el tipo de objeto que se puede añadir:
+	 * @param parametros.anexo es el tipo de objeto que se puede añadir:
 	 *  anexo 1: producto,
 	 *  anexo 2: audio,
 	 *  anexo 3: sticker
 	 */
-	var manejarMensaje = function(parametros, anexo) {
+	var manejarMensaje = function(parametros) {
 		const outgoingMessage = document.createElement("div")
 		outgoingMessage.setAttribute("class", "outgoing_msg")
 		const photo = document.createElement("div")
@@ -82,13 +82,32 @@ var Botaren = function() {
 		receivedMessage.setAttribute("class", "received_withd_msg")
 		message.appendChild(receivedMessage)
 
-		switch(anexo) {
+		switch(parametros.anexo) {
 			case 1:
-				const product = document.createElement("img")
-				product.src = "img/1.jpg"
-				product.alt = "imagen de jean"
-				receivedMessage.appendChild(product)
-				break
+				const contenedor = document.createElement("div")
+				contenedor.setAttribute("class", "container")
+				receivedMessage.appendChild(contenedor)
+				const fila = document.createElement("div")
+				fila.setAttribute("class", "row")
+				contenedor.appendChild(fila)
+					for(let producto of parametros.productos) {
+						const columna = document.createElement("div")
+						columna.setAttribute("class", "col-12 col-sm-6 col-md-3 col-lg-2")
+						fila.appendChild(columna)
+						const product = document.createElement("img")
+						product.src = "img/producto/" + producto.identidad + ".jpg"
+						product.width = 100
+						product.height = 100
+						product.alt = "imagen de jean"
+						columna.appendChild(product)
+
+						const price = document.createElement("button")
+						price.type = "buttton"
+						price.setAttribute("class", "btn btn-primary")
+						price.appendChild(document.createTextNode("T: " + producto.talla + " - S/" + producto.precio))
+						columna.appendChild(price)
+					}
+					break
 		}
 
 		const text = document.createElement("p")
