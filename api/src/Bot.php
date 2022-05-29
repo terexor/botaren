@@ -127,16 +127,26 @@ class Bot implements MessageComponentInterface {
 				if($estructura == null) {
 					$respuesta['cheveridad'] = false;
 					$respuesta['params']['texto'] = 'Ingresa más datos.';
-					$respuesta['params']['anexo'] = 1;
-
+				}
+				elseif( count($estructura) == 0 ) {
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'No se hallaraon productos.';
 				}
 				else {
+					$respuesta['cheveridad'] = true;
+					$respuesta['params']['anexo'] = 1;
+					$respuesta['params']['texto'] = 'Se hallaron estos jeans.';
+					$respuesta['params']['productos'] = $estructura;
 				}
 
 				$from->send( json_encode( $respuesta ) );
 				break;
+			case 'smalltalk.greetings.hello':
 			default:
-				//~ //mostrar inconsistencia
+				$respuesta['cheveridad'] = true;
+				$respuesta['params']['texto'] = $queryResult->getFulfillmentText();
+
+				$from->send( json_encode( $respuesta ) );
 		}
 	}
 
@@ -155,26 +165,30 @@ class Bot implements MessageComponentInterface {
 		}
 		$in  = str_repeat('?,', count($sColores) - 1) . '?';
 		echo "SELECT modelo, talla, color, precio FROM jean WHERE color IN ($in)\n";
-		$sentenciaSeleccionadora = $this->bd->prepare("SELECT modelo, talla, color, precio FROM jean WHERE color IN ($in)");
+		$sentenciaSeleccionadora = $this->bd->prepare("SELECT identidad, modelo, talla, color, precio FROM jean WHERE color IN ($in)");
 		$types = str_repeat('i', count($sColores));
 		$sentenciaSeleccionadora->bind_param($types, ...$sColores);
 		$resultado = $sentenciaSeleccionadora->execute();
+
+		$productos = [];
+
 		if($resultado) {
 			//Ejecución correcta
 			$resultado = $sentenciaSeleccionadora->get_result();
 			while($fila = $resultado->fetch_assoc()) {
-				echo "modelo: {$fila['modelo']}, color: {$fila['color']}, talla: {$fila['talla']}, precio: {$fila['precio']}\n";
+				//~ echo "modelo: {$fila['modelo']}, color: {$fila['color']}, talla: {$fila['talla']}, precio: {$fila['precio']}\n";
+				$productos[] = $fila;
 			}
 		}
-		else {
+		//~ else {
 			//'No se encontró nada.'
-		}
+		//~ }
 		$sentenciaSeleccionadora->close();
 
-		//~ $from->send( json_encode( $respuesta ) );
+		return $productos;
 	}
 
-	function _color( $color ) {
+	private static function _color( $color ) {
 		return match( $color ) {
 			'rojo' => 1,
 			'verde' => 2,

@@ -84,21 +84,30 @@ var Botaren = function() {
 
 		switch(parametros.anexo) {
 			case 1:
-			for(let int = 0; int < 4; ++int) {
-				const product = document.createElement("img")
-				product.src = "img/producto/1.jpg"
-				product.width = 100
-				product.height = 100
-				product.alt = "imagen de jean"
-				receivedMessage.appendChild(product)
+				const contenedor = document.createElement("div")
+				contenedor.setAttribute("class", "container")
+				receivedMessage.appendChild(contenedor)
+				const fila = document.createElement("div")
+				fila.setAttribute("class", "row")
+				contenedor.appendChild(fila)
+					for(let producto of parametros.productos) {
+						const columna = document.createElement("div")
+						columna.setAttribute("class", "col-12 col-sm-6 col-md-3 col-lg-2")
+						fila.appendChild(columna)
+						const product = document.createElement("img")
+						product.src = "img/producto/" + producto.identidad + ".jpg"
+						product.width = 100
+						product.height = 100
+						product.alt = "imagen de jean"
+						columna.appendChild(product)
 
-				const precio = document.createElement("button")
-				precio.type = "buttton"
-				precio.setAttribute("class", "btn btn-primary")
-				precio.appendChild(document.createTextNode("T: 1231 - S/232"))
-				receivedMessage.appendChild(precio)
-			}
-				break
+						const price = document.createElement("button")
+						price.type = "buttton"
+						price.setAttribute("class", "btn btn-primary")
+						price.appendChild(document.createTextNode("T: " + producto.talla + " - S/" + producto.precio))
+						columna.appendChild(price)
+					}
+					break
 		}
 
 		const text = document.createElement("p")
