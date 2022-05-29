@@ -1,5 +1,5 @@
 var botaren
-const esRemoto = false
+const esRemoto = true
 var Botaren = function() {
 	console.log("Botarenizado")
 	var conn

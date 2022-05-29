@@ -12,8 +12,8 @@ use Google\Cloud\Dialogflow\V2\QueryInput;
 class Bot implements MessageComponentInterface {
 
 	public function __construct() {
-		$this->sessionsClient = new SessionsClient( array('credentials' => 'dialogflow-client-secret.json') );
-		$this->bd = new \mysqli("localhost", "root", "clave", "botaren");
+		$this->sessionsClient = new SessionsClient( array('credentials' => 'client-secret.json') );
+		$this->bd = new \mysqli("localhost", "root", "", "botaren");
 		echo("Bot encendido.\n");
 	}
 

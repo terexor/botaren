@@ -22,8 +22,8 @@ $app = new HttpServer($oc);
 
 $secure_websockets = new \React\Socket\Server('0.0.0.0:666', $loop);
 $secure_websockets = new \React\Socket\SecureServer($secure_websockets, $loop, [
-	'local_cert' => 'C:/Apache24/conf/ca/localhost.crt',
-	'local_pk' => 'C:/Apache24/conf/ca/localhost.key',
+	'local_cert' => '/etc/apache2/certificate/apache-certificate.crt',
+	'local_pk' => '/etc/apache2/certificate/apache.key',
 	'verify_peer' => false
 ]);
 
