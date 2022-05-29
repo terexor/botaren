@@ -39,10 +39,8 @@ class Bot implements MessageComponentInterface {
 			//Del 1000 hacia arriba son asíncronas.
 			switch($datos['action']) {
 				case 10:
-					//~ $respuesta['cheveridad'] = true;
 					$queryResult = $this->detectIntentTexts('karen-fnkq', $datos['params']['texto'],'930793 94770rr');
 					$this->procesarSalida( $queryResult, $from, $respuesta );
-					//~ $from->send( json_encode( $respuesta ) );
 					return;
 				default:
 					$respuesta['cheveridad'] = false;
@@ -85,11 +83,11 @@ class Bot implements MessageComponentInterface {
 			// get response and relevant info
 			$response = $this->sessionsClient->detectIntent($session, $queryInput);
 			$queryResult = $response->getQueryResult();
-			$queryText = $queryResult->getQueryText();
-			$intent = $queryResult->getIntent();
-			$displayName = $intent->getDisplayName();
-			$confidence = $queryResult->getIntentDetectionConfidence();
-			$fulfilmentText = $queryResult->getFulfillmentText();
+			//~ $queryText = $queryResult->getQueryText();
+			//~ $intent = $queryResult->getIntent();
+			//~ $displayName = $intent->getDisplayName();
+			//~ $confidence = $queryResult->getIntentDetectionConfidence();
+			//~ $fulfilmentText = $queryResult->getFulfillmentText();
 
 			// output relevant info
 			//~ print(str_repeat("=", 20) . PHP_EOL);
@@ -100,9 +98,9 @@ class Bot implements MessageComponentInterface {
 			//~ printf('Fulfilment text: %s' . PHP_EOL, $fulfilmentText);
 
 			//~ $sessionsClient->close();
-			echo "/ntipo: " . $queryResult->getOutputContexts()->getType();
-			echo "/nclase: " . $queryResult->getOutputContexts()->getClass();
-			echo "/ncuenta: " . $queryResult->getOutputContexts()->count();
+			echo "\ntipo: " . $queryResult->getOutputContexts()->getType();
+			echo "\nclase: " . $queryResult->getOutputContexts()->getClass();
+			echo "\ncuenta: " . $queryResult->getOutputContexts()->count();
 
 			return $queryResult;
 		}
@@ -113,36 +111,59 @@ class Bot implements MessageComponentInterface {
 	}
 
 	private function procesarSalida( $queryResult, $from, &$respuesta ) {
-		$respuesta['cheveridad'] = true;
-		$respuesta['params']['texto'] = $queryResult->getFulfillmentText();
-		$from->send( json_encode( $respuesta ) );
-		return;
-		//~ switch( $intent ) {
-			//~ case 'bot.producto.muestra':
-				$this->mostrarProductos( $modelo, $talla, $color, $precio );
-				//~ break;
-			//~ default:
-				//mostrar inconsistencia
+		//~ $respuesta['cheveridad'] = true;
+		//~ $respuesta['params']['texto'] = $queryResult->getFulfillmentText();
+		//~ $from->send( json_encode( $respuesta ) );
+		//~ return;
+		$intent = $queryResult->getIntent()->getDisplayName();
+		echo "\n$intent\n";
+		switch( $intent ) {
+			case 'bot.producto.busqueda':
+				$campos = json_decode( $queryResult->getParameters()->serializeToJsonString(), true );
+
+				//~ var_dump( $campos );
+				$estructura = $this->mostrarProductos( $campos['producto-modelo'], $campos['talla'], $campos['color'] );
+
+				if($estructura == null) {
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Ingresa más datos.';
+					$respuesta['params']['anexo'] = 1;
+
+				}
+				else {
+				}
+
+				$from->send( json_encode( $respuesta ) );
+				break;
+			default:
+				//~ //mostrar inconsistencia
+		}
 	}
 
 	/**
 	 * Manda al cliente una lista de productos.
 	 * Esa lista puede contener uno o más productos.
 	 */
-	private function mostrarProductos( $modelo, $talla, $color, $precio ) {
-		$sentenciaSeleccionadora = $bd->prepare('SELECT campo1, campo2 FROM Tabla WHERE condicionInt = ?, condicionString = ?');
-		$sentenciaSeleccionadora->bind_param('is', $condicionInt, $condicionString);
+	private function mostrarProductos( $modelos, $tallas, $colores ) {
+		if( ( count($modelos) + count($tallas) + count($colores) ) == 0 ) {
+			return null;
+		}
+
+		$sColores[] = 0;
+		foreach($colores as $color) {
+			$sColores[] = $this->_color($color);
+		}
+		$in  = str_repeat('?,', count($sColores) - 1) . '?';
+		echo "SELECT modelo, talla, color, precio FROM jean WHERE color IN ($in)\n";
+		$sentenciaSeleccionadora = $this->bd->prepare("SELECT modelo, talla, color, precio FROM jean WHERE color IN ($in)");
+		$types = str_repeat('i', count($sColores));
+		$sentenciaSeleccionadora->bind_param($types, ...$sColores);
 		$resultado = $sentenciaSeleccionadora->execute();
 		if($resultado) {
 			//Ejecución correcta
 			$resultado = $sentenciaSeleccionadora->get_result();
 			while($fila = $resultado->fetch_assoc()) {
-				$variableParaCampo1 = $fila['campo1'];
-				$variableParaCampo2 = $fila['campo2'];
-
-				$respuesta['cheveridad'] = true;
-				$respuesta['action'] = 1000;
-				$respuesta['params']['producto']['modelo'] = 'No existe opción';
+				echo "modelo: {$fila['modelo']}, color: {$fila['color']}, talla: {$fila['talla']}, precio: {$fila['precio']}\n";
 			}
 		}
 		else {
@@ -150,6 +171,17 @@ class Bot implements MessageComponentInterface {
 		}
 		$sentenciaSeleccionadora->close();
 
-		$from->send( json_encode( $respuesta ) );
+		//~ $from->send( json_encode( $respuesta ) );
+	}
+
+	function _color( $color ) {
+		return match( $color ) {
+			'rojo' => 1,
+			'verde' => 2,
+			'azul' => 3,
+			'negro' => 4,
+			'marrón' => 5,
+			default => 0
+		};
 	}
 }

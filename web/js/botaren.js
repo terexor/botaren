@@ -1,5 +1,5 @@
 var botaren
-const esRemoto = false
+const esRemoto = true
 var Botaren = function() {
 	console.log("Botarenizado")
 	var conn
@@ -60,12 +60,12 @@ var Botaren = function() {
 	}
 
 	/**
-	 * @param anexo es el tipo de objeto que se puede añadir:
+	 * @param parametros.anexo es el tipo de objeto que se puede añadir:
 	 *  anexo 1: producto,
 	 *  anexo 2: audio,
 	 *  anexo 3: sticker
 	 */
-	var manejarMensaje = function(parametros, anexo) {
+	var manejarMensaje = function(parametros) {
 		const outgoingMessage = document.createElement("div")
 		outgoingMessage.setAttribute("class", "outgoing_msg")
 		const photo = document.createElement("div")
@@ -82,12 +82,22 @@ var Botaren = function() {
 		receivedMessage.setAttribute("class", "received_withd_msg")
 		message.appendChild(receivedMessage)
 
-		switch(anexo) {
+		switch(parametros.anexo) {
 			case 1:
+			for(let int = 0; int < 4; ++int) {
 				const product = document.createElement("img")
-				product.src = "img/1.jpg"
+				product.src = "img/producto/1.jpg"
+				product.width = 100
+				product.height = 100
 				product.alt = "imagen de jean"
 				receivedMessage.appendChild(product)
+
+				const precio = document.createElement("button")
+				precio.type = "buttton"
+				precio.setAttribute("class", "btn btn-primary")
+				precio.appendChild(document.createTextNode("T: 1231 - S/232"))
+				receivedMessage.appendChild(precio)
+			}
 				break
 		}
 
