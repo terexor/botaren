@@ -13,7 +13,7 @@ class Bot implements MessageComponentInterface {
 
 	public function __construct() {
 		$this->sessionsClient = new SessionsClient( array('credentials' => 'client-secret.json') );
-		$this->bd = new \mysqli("localhost", "root", "", "botaren");
+		$this->bd = new \mysqli("localhost", "root", "root", "botaren");
 		echo("Bot encendido.\n");
 	}
 
@@ -158,16 +158,35 @@ class Bot implements MessageComponentInterface {
 		if( ( count($modelos) + count($tallas) + count($colores) ) == 0 ) {
 			return null;
 		}
-
+	
+		$sTallas[]= 0;
+		$sModelos[]= "";
 		$sColores[] = 0;
+		
 		foreach($colores as $color) {
 			$sColores[] = $this->_color($color);
 		}
-		$in  = str_repeat('?,', count($sColores) - 1) . '?';
-		echo "SELECT modelo, talla, color, precio FROM jean WHERE color IN ($in)\n";
-		$sentenciaSeleccionadora = $this->bd->prepare("SELECT identidad, modelo, talla, color, precio FROM jean WHERE color IN ($in)");
-		$types = str_repeat('i', count($sColores));
-		$sentenciaSeleccionadora->bind_param($types, ...$sColores);
+
+		foreach($tallas as $talla) {
+		    $sTallas[] = intval($talla); 
+		}
+
+		foreach($modelos as $modelo) {
+		    $sModelos[] = $modelo;
+		}
+		
+		$inColores  = str_repeat('?,', count($sColores) - 1) . '?';
+		$inTallas  = str_repeat('?,', count($sTallas) - 1) . '?';
+		$inModelos  = str_repeat('?,', count($sModelos) - 1) . '?';
+		
+		$sentenciaSeleccionadora = $this->bd->prepare("SELECT identidad, modelo, talla, color, precio FROM jean WHERE (color IN ($inColores) ".(count($sColores) > 1? "AND": "OR")." color LIKE '%') AND (talla IN ($inTallas) ".(count($sTallas) > 1? "AND": "OR")." talla LIKE '%') AND (modelo IN ($inModelos) ".(count($sModelos) > 1? "AND": "OR")." modelo LIKE '%')");
+			
+		$typesColores = str_repeat('i', count($sColores));
+		$typesTallas = str_repeat('i', count($sTallas));
+		$typesModelos = str_repeat('s'c count($sModelos));
+		
+		$sentenciaSeleccionadora->bind_param($typesColores.$typesTallas.$typesModelos, ...$sColores, ...$sTallas, ...$sModelos);
+		
 		$resultado = $sentenciaSeleccionadora->execute();
 
 		$productos = [];
