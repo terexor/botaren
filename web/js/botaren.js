@@ -1,5 +1,8 @@
 var botaren
 const esRemoto = true
+const CONEXION_INCONECTABLE = "Sin conexión con servidor."
+const CONEXION_CONECTABLE = "Estableciendo conexión\u2026"
+
 var Botaren = function() {
 	console.log("Botarenizado")
 	var conn
@@ -61,17 +64,6 @@ var Botaren = function() {
 		return true
 	}
 
-	//~ var mostrarPerfil = function() {
-		//~ const contenedor = document.getElementById("sidebar-contenido")
-		//~ while(contenedor.firstChild) {
-			//~ contenedor.firstChild.remove()
-		//~ }
-
-		//~ const datos = parseJwt(botaren.token)
-
-		//~ contenedor.appendChild(document.createTextNode("Hola, " + datos.alias))
-	//~ }
-
 	var manejarAcceso = function(cheveridad, parametros) {
 		if(cheveridad) {
 			botaren.token = parametros.token
@@ -86,10 +78,7 @@ var Botaren = function() {
 	}
 
 	/**
-	 * @param parametros.anexo es el tipo de objeto que se puede añadir:
-	 *  anexo 1: producto,
-	 *  anexo 2: audio,
-	 *  anexo 3: sticker
+	 * Dibuja todo lo necesario en el historial del chat.
 	 */
 	var manejarMensaje = function(parametros) {
 		const outgoingMessage = document.createElement("div")
@@ -211,7 +200,6 @@ var Botaren = function() {
 		}
 
 		if(! (credencial.params.email.length && credencial.params.password.length ) ) {
-			//console.log("Escribe algo para mandar")
 			Notiflix.Notify.Warning("Credenciales incompletas")
 			//~ Notiflix.Block.Remove("#formulario-accesador")
 			return
