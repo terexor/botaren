@@ -22,11 +22,7 @@ $oc->allowedOrigins[] = '192.168.1.46';
 $app = new HttpServer($oc);
 
 $secure_websockets = new \React\Socket\Server('0.0.0.0:666', $loop);
-$secure_websockets = new \React\Socket\SecureServer($secure_websockets, $loop, [
-	'local_cert' => '/etc/apache2/certificate/apache-certificate.crt',
-	'local_pk' => '/etc/apache2/certificate/apache.key',
-	'verify_peer' => false
-]);
+$secure_websockets = new \React\Socket\SecureServer($secure_websockets, $loop, include 'ws-certs-path.php');
 
 $secure_websockets_server = new \Ratchet\Server\IoServer($app, $secure_websockets, $loop);
 $secure_websockets_server->run();

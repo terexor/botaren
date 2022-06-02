@@ -8,25 +8,52 @@
 		<meta name="description" content="Bot para atender ventas" />
 		<title>Compra de jeans a través de un simple bot</title>
 		<link rel="shortcut icon" href="/favicon.ico">
-		<link rel="apple-touch-icon" href="/img/logo-192-apple.png">
 		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
 		<link data-senna-track="permanent" rel="stylesheet" href="css/bootstrap.min.css">
 		<link data-senna-track="permanent" rel="stylesheet" href="css/notiflix-2.7.0.min.css">
 		<link data-senna-track="permanent" rel="stylesheet" href="css/botaren.css">
 	</head>
 	<body>
-		<div class="container">
-			<div class="messaging">
-				<div class="inbox_msg">
-					<div class="mesgs">
-						<div class="msg_history" id="historial"></div>
-						<div class="type_msg">
-							<div class="input_msg_write">
-								<input type="text" class="write_msg" placeholder="Mensaje para Botaren" id="mensajero" onkeypress="if(event.keyCode == 13)botaren.teclear()" />
-								<button class="msg_send_btn" type="button" onclick="botaren.teclear()"><i class="fa fa-paper-plane-o" aria-hidden="true"></i></button>
+		<div id="mySidebar" class="container sidebar d-none w-100">
+			<a href="javascript:void(0)" class="closebtn" onclick="toggleNav()">×</a>
+			<div class="row">
+				<div class="col-12" id="sidebar-contenido">
+<!--
+					<form>
+						<div class="form-group">
+							<label for="nuntii">Email</label>
+							<input type="email" class="form-control" id="nuntii" placeholder="dolares@efectibit.com">
+						</div>
+						<div class="form-group">
+							<label for="clavis">Clave</label>
+							<input type="password" class="form-control" id="clavis" placeholder="Contraseña">
+						</div>
+					</form>
+-->
+				</div>
+			</div>
+		</div>
+		<div id="main" class="container-fluid d-flex" style="min-height: 100vh;">
+			<div class="row flex-fill">
+				<div class="col-12 flex-fill">
+
+					<div class="messaging" class="h-auto">
+						<div id="controles" class="h-auto p-2">
+							<button type="button" class="btn btn-sm btn-primary" onclick="toggleNav('perfil')"><i class="fas fa-child"></i> Perfil</button>
+						</div>
+						<div class="inbox_msg">
+							<div class="mesgs">
+								<div class="msg_history" id="historial"></div>
+								<div class="type_msg">
+									<div class="input_msg_write">
+										<input type="text" class="write_msg" placeholder="Mensaje para Botaren" id="mensajero" onkeypress="if(event.keyCode == 13)botaren.teclear()" />
+										<button class="msg_send_btn" type="button" onclick="botaren.teclear()"><i class="fa fa-paper-plane-o" aria-hidden="true"></i></button>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
+
 				</div>
 			</div>
 		</div>

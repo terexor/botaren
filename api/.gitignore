@@ -3,3 +3,5 @@ vendor/
 #Archivos confidenciales
 dialogflow-client-secret.json
 *.sql
+#configuración de las rutas de los certificados
+ws-certs-path.php

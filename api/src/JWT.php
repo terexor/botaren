@@ -1,5 +1,5 @@
 <?php
-namespace AloAsesor;
+namespace Botaren;
 /**
  * JSON Web Token implementation, based on this spec:
  * http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-06
@@ -13,7 +13,7 @@ namespace AloAsesor;
  * @license  http://opensource.org/licenses/BSD-3-Clause 3-clause BSD
  * @link     https://github.com/firebase/php-jwt
  */
-define('CLAVE_JWT', '&w.(wl)qG/.d$wslAaBugeado2');
+define('CLAVE_JWT', '&(*wl)->GARMUR-HaciaBugeadores2');
 
 class JWT {
 	/**
