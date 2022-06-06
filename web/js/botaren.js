@@ -2,12 +2,18 @@ var botaren
 const esRemoto = true
 const CONEXION_INCONECTABLE = "Sin conexión con servidor."
 const CONEXION_CONECTABLE = "Estableciendo conexión\u2026"
+const WS_PORT = "666"
 
 var Botaren = function() {
 	console.log("Botarenizado")
 	var conn
 
-	this.token = window.localStorage.getItem("token")
+	this.inicializar = function() {
+		this.token = window.localStorage.getItem("token")
+		this.sesion = uuidv4()
+	}
+
+	this.productoElegido = parseInt(window.localStorage.getItem("producto"))//identidad
 
 	var wsMensajeado = function(e) {
 		let respuesta = JSON.parse(e.data)
@@ -15,6 +21,9 @@ var Botaren = function() {
 		switch(respuesta.action) {
 			case 1:
 				manejarAcceso(respuesta.cheveridad, respuesta.params)
+				break
+			case 3:
+				manejarCompra(respuesta.cheveridad, respuesta.params)
 				break
 			case 1000:
 				manejarMensaje(respuesta.params)
@@ -24,7 +33,7 @@ var Botaren = function() {
 
 	this.enlazar = function() {
 		try {
-			conn = new ReconnectingWebSocket("wss://" + location.hostname + ":666")
+			conn = new ReconnectingWebSocket("wss://" + location.hostname + ":" + WS_PORT)
 			conn.debug = false
 			conn.reconnectInterval = 3666
 			conn.reconnectDecay = 3.255
@@ -48,6 +57,7 @@ var Botaren = function() {
 	}
 
 	var wsDesenchufado = function() {
+		//Deshabilitar el cuadro de escritura
 	}
 
 	var wsEnchufado = function() {
@@ -120,6 +130,9 @@ var Botaren = function() {
 						price.type = "buttton"
 						price.setAttribute("class", "btn btn-primary")
 						price.appendChild(document.createTextNode("T: " + producto.talla + " - S/" + producto.precio))
+						price.onclick = function() {
+							encestar(producto.identidad)
+						}
 						columna.appendChild(price)
 					}
 					break
@@ -127,19 +140,74 @@ var Botaren = function() {
 
 		const text = document.createElement("p")
 		if(!esRemoto) {
-			text.appendChild(document.createTextNode("Soy el bot"))
+			text.appendChild(document.createTextNode("Soy el bot."))
 		}
 		else {
-			text.appendChild(document.createTextNode(parametros.texto))
+			if(parametros.texto != '') {
+				text.appendChild(document.createTextNode(parametros.texto))
+			}
+			else {
+				const vacio = document.createElement("i")
+				vacio.appendChild(document.createTextNode("Sin respuesta textual."))
+				text.appendChild(vacio)
+			}
 		}
 		receivedMessage.appendChild(text)
 		const date = document.createElement("span")
 		date.setAttribute("class", "time_date")
-		date.appendChild(document.createTextNode("Ahora"))
+		date.appendChild(document.createTextNode(imprimirFecha(new Date(), true)))
 		receivedMessage.appendChild(date)
 
 		historial.appendChild(outgoingMessage)
-		historial.scrollTo(0, historial.scrollHeight);
+		historial.scrollTo(0, historial.scrollHeight)
+	}
+
+	var encestar = function(identidad) {
+		if(identidad <= 0) {
+			Notiflix.Notify.Failure("La referencia del producto no existe.")
+			return
+		}
+
+		botaren.productoElegido = identidad
+		window.localStorage.setItem("producto", identidad)
+		Notiflix.Notify.Success("Producto escogido: " + identidad)
+	}
+
+	/**
+	 * Revisa si hay identidad de producto y manda orden para comprarlo.
+	 */
+	this.comprar = function() {
+		if(isNaN(this.productoElegido)) {
+			Notiflix.Notify.Warning("No hay producto elegido.")
+			return
+		}
+
+		if(esRemoto) {
+			const mensaje = {
+				action: 3,
+				token: this.token,
+				params: {
+					producto: this.productoElegido
+				}
+			}
+
+			//Enviar
+			if( ! mensajear(JSON.stringify(mensaje)) ) {
+				return
+			}
+		}
+	}
+
+	var manejarCompra = function(cheveridad, parametros) {
+		if(cheveridad) {
+			Notiflix.Report.Success("Comprado", parametros.texto, "Aceptar")
+			manejarMensaje(parametros)
+			botaren.productoElegido = NaN
+			mostrarCarro()
+		}
+		else {
+			Notiflix.Report.Failure("No comprado", parametros.texto, "Aceptar")
+		}
 	}
 
 	this.teclear = function() {
@@ -154,6 +222,13 @@ var Botaren = function() {
 				params: {
 					texto: texto
 				}
+			}
+
+			if(this.token) {
+				mensaje.token = this.token
+			}
+			else {
+				mensaje.params.session = this.sesion
 			}
 
 			//Enviar
@@ -174,7 +249,7 @@ var Botaren = function() {
 		message.appendChild(text)
 		const date = document.createElement("span")
 		date.setAttribute("class", "time_date")
-		date.appendChild(document.createTextNode("Ahora"))
+		date.appendChild(document.createTextNode(imprimirFecha(new Date(), true)))
 		message.appendChild(date)
 
 		historial.appendChild(outgoingMessage)
@@ -183,11 +258,9 @@ var Botaren = function() {
 
 	this.acceder = function(formulario) {
 		if(conn.readyState != WebSocket.OPEN) {
-			Notiflix.Notify.Failure(CONEXION_INCONECTABLE);
+			Notiflix.Notify.Failure(CONEXION_INCONECTABLE)
 			return
 		}
-
-		//~ Notiflix.Block.Standard("#formulario-accesador", "Iniciando\u2026")
 
 		formulario.elements.email.blur()
 		formulario.elements.clave.blur()
@@ -201,7 +274,6 @@ var Botaren = function() {
 
 		if(! (credencial.params.email.length && credencial.params.password.length ) ) {
 			Notiflix.Notify.Warning("Credenciales incompletas")
-			//~ Notiflix.Block.Remove("#formulario-accesador")
 			return
 		}
 
@@ -236,9 +308,39 @@ function toggleNav(tipo) {
 	}
 
 	switch(tipo) {
-		case 'perfil':
-			mostrarPerfil()
+		case "perfil":
+			mostrarPerfil();break
+		case "carro":
+			mostrarCarro()
 	}
+}
+
+function mostrarCarro() {
+	const contenedor = document.getElementById("sidebar-contenido")
+	while(contenedor.firstChild) {
+		contenedor.firstChild.remove()
+	}
+
+	if(isNaN(botaren.productoElegido)) {
+		contenedor.appendChild(document.createTextNode("Aún no has elegido algún producto."))
+		return
+	}
+
+	const product = document.createElement("img")
+	product.src = "img/producto/" + botaren.productoElegido + ".jpg"
+	product.width = 256
+	product.height = 256
+	product.alt = "imagen de jean"
+	contenedor.appendChild(product)
+
+	const enviador = document.createElement("button")
+	enviador.type = "button"
+	enviador.setAttribute("class", "btn btn-success btn-lg btn-block mt-2")
+	enviador.appendChild(document.createTextNode("Comprar"))
+	enviador.onclick = function() {
+		botaren.comprar()
+	}
+	contenedor.appendChild(enviador)
 }
 
 function mostrarPerfil() {
@@ -248,7 +350,6 @@ function mostrarPerfil() {
 	}
 
 	if(botaren.token) {
-		debugger
 		const datos = parseJwt(botaren.token)
 
 		contenedor.appendChild(document.createTextNode("Hola, " + datos.alias + '.'))
@@ -318,8 +419,25 @@ function parseJwt(token) {
 	return JSON.parse(window.atob(base64));
 }
 
+function imprimirFecha(fecha, conHora = true) {
+	let dateString = ("0" + fecha.getDate()).slice(-2) + "/" + ("0" + (fecha.getMonth()+1)).slice(-2) + "/" + fecha.getFullYear()
+	if(conHora) {
+		dateString += " " + ("0" + fecha.getHours()).slice(-2) + ":" + ("0" + fecha.getMinutes()).slice(-2) + ":" + ("0" + fecha.getSeconds()).slice(-2)
+	}
+
+	return dateString
+}
+
+//Se podría usar esto Crypto.randomUUID(), pero...
+function uuidv4() {//https://stackoverflow.com/a/2117523
+	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+		(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+	)
+}
+
 window.onload = function() {
 	botaren = new Botaren()
+	botaren.inicializar()
 	if(esRemoto) {
 		botaren.enlazar()
 	}

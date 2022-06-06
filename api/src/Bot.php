@@ -11,9 +11,10 @@ use Google\Cloud\Dialogflow\V2\QueryInput;
 
 class Bot implements MessageComponentInterface {
 
-	public function __construct() {
-		$this->sessionsClient = new SessionsClient( array('credentials' => 'dialogflow-client-secret.json') );
-		$this->bd = new \mysqli("localhost", "root", "clave", "botaren");
+	public function __construct($credentials, $dialogflowSecretPath, $dialogflowToken) {
+		$this->sessionsClient = new SessionsClient( array('credentials' => $dialogflowSecretPath) );
+		$this->sessionDialogflow = $dialogflowToken;
+		$this->bd = new \mysqli($credentials['host'], $credentials['user'], $credentials['password'], $credentials['db']);
 		echo("Bot encendido.\n");
 	}
 
@@ -34,6 +35,21 @@ class Bot implements MessageComponentInterface {
 		//Siempre debe haber una reacción de igual magnitud (y en sentido contrario).
 		$respuesta['action'] = $datos['action'];
 
+		//El token puede que venga o no.
+		if( isset($datos['token']) && $datos['token'] != null) {
+			try {
+				$token = JWT::decode($datos['token'], CLAVE_JWT);
+			}
+			catch(\Exception $e) {
+				$respuesta['action'] = 600;
+				$respuesta['cheveridad'] = false;
+				$respuesta['params']['info'] = 'Token de sesión modificado.';
+
+				$from->send( json_encode( $respuesta ) );
+				return;
+			}
+		}
+
 		try {
 			//De menor que 0 al 999 son acciones de ida y vuelta.
 			//Del 1000 hacia arriba son asíncronas.
@@ -51,8 +67,11 @@ class Bot implements MessageComponentInterface {
 				case 1://INICIAR SESIÓN
 					$this->iniciarSesion($datos, $from, $respuesta);
 					break;
+				case 3://COMPRAR
+					$this->comprar($datos, $token, $from, $respuesta);
+					break;
 				case 1000:
-					$queryResult = $this->detectIntentTexts( $datos );
+					$queryResult = $this->detectIntentTexts( $datos, $token?->botkn);
 					$this->procesarSalida( $queryResult, $from, $respuesta );
 					return;
 				default:
@@ -77,15 +96,14 @@ class Bot implements MessageComponentInterface {
 	public function onError(ConnectionInterface $conn, \Exception $e) {
 	}
 
-	private function detectIntentTexts($datos, $languageCode = 'es-PE') {
+	private function detectIntentTexts($datos, $token, $languageCode = 'es-PE') {
 		$text = $datos['params']['texto'];
 		if(!isset($text)) {
 			return null;
 		}
 
 		try {
-			//~ $sessionsClient = new SessionsClient( array('credentials' => 'dialogflow-client-secret.json') );
-			$session = $this->sessionsClient->sessionName('karen-fnkq', $datos['params']['session'] ?? uniqid());
+			$session = $this->sessionsClient->sessionName('karen-fnkq', $token ?? $datos['params']['session'] ?? $this->sessionDialogflow);
 			printf('Session path: %s' . PHP_EOL, $session);
 
 			// create text input
@@ -100,21 +118,7 @@ class Bot implements MessageComponentInterface {
 			// get response and relevant info
 			$response = $this->sessionsClient->detectIntent($session, $queryInput);
 			$queryResult = $response->getQueryResult();
-			//~ $queryText = $queryResult->getQueryText();
-			//~ $intent = $queryResult->getIntent();
-			//~ $displayName = $intent->getDisplayName();
-			//~ $confidence = $queryResult->getIntentDetectionConfidence();
-			//~ $fulfilmentText = $queryResult->getFulfillmentText();
 
-			// output relevant info
-			//~ print(str_repeat("=", 20) . PHP_EOL);
-			//~ printf('Query text: %s' . PHP_EOL, $queryText);
-			//~ printf('Detected intent: %s (confidence: %f)' . PHP_EOL, $displayName,
-				//~ $confidence);
-			//~ print(PHP_EOL);
-			//~ printf('Fulfilment text: %s' . PHP_EOL, $fulfilmentText);
-
-			//~ $sessionsClient->close();
 			echo "\ntipo: " . $queryResult->getOutputContexts()->getType();
 			echo "\nclase: " . $queryResult->getOutputContexts()->getClass();
 			echo "\ncuenta: " . $queryResult->getOutputContexts()->count();
@@ -141,15 +145,18 @@ class Bot implements MessageComponentInterface {
 					$respuesta['cheveridad'] = false;
 					$respuesta['params']['texto'] = 'Ingresa más datos.';
 				}
-				elseif( count($estructura) == 0 ) {
-					$respuesta['cheveridad'] = false;
-					$respuesta['params']['texto'] = 'No se hallaron productos.';
-				}
 				else {
-					$respuesta['cheveridad'] = true;
-					$respuesta['params']['anexo'] = 1;
-					$respuesta['params']['texto'] = count($estructura) == 1 ? 'Encontré este jean.' : 'Se hallaron estos jeans.';
-					$respuesta['params']['productos'] = $estructura;
+					$cantidadDeProductos = count($estructura);
+					if( $cantidadDeProductos == 0 ) {
+						$respuesta['cheveridad'] = false;
+						$respuesta['params']['texto'] = 'No se hallaron productos.';
+					}
+					else {
+						$respuesta['cheveridad'] = true;
+						$respuesta['params']['anexo'] = 1;
+						$respuesta['params']['texto'] = $cantidadDeProductos == 1 ? 'Encontré este jean.' : 'Se hallaron estos jeans.';
+						$respuesta['params']['productos'] = $estructura;
+					}
 				}
 
 				$from->send( json_encode( $respuesta ) );
@@ -283,6 +290,25 @@ class Bot implements MessageComponentInterface {
 	}
 
 	private function cerrarSesion(&$datos, &$token, &$from, $respuesta) {
+	}
+
+	private function comprar(&$datos, &$token, &$from, $respuesta) {
+		$sentenciaInsertadora = $this->bd->prepare('INSERT INTO ventarapida VALUES(0, 0, ?, ?, UNIX_TIMESTAMP(NOW()), 0, 1)');
+		$sentenciaInsertadora->bind_param('ii', $token->uid, $datos['params']['producto']);
+		$sentenciaInsertadora->execute();
+
+		//Si no se insertó entonces no debe haber ninguna fila
+		$identidad = $this->bd->insert_id;
+
+		if($identidad == 0) {
+			$respuesta['cheveridad'] = false;
+			$respuesta['params']['texto'] = 'No se pudo registrar compra.';
+		}
+		else {
+			$respuesta['cheveridad'] = true;
+			$respuesta['params']['texto'] = "Producto comprado con N° de transacción: $identidad.";
+		}
+		$from->send( json_encode( $respuesta ) );
 	}
 }
 
