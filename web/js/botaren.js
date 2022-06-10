@@ -24,6 +24,8 @@ var Botaren = function() {
 				break
 			case 3:
 				manejarCompra(respuesta.cheveridad, respuesta.params)
+			case 600:
+				manejarTokenAlterado(respuesta.params)
 				break
 			case 1000:
 				manejarMensaje(respuesta.params)
@@ -72,6 +74,13 @@ var Botaren = function() {
 		}
 		conn.send(json)
 		return true
+	}
+
+	var manejarTokenAlterado = function(parametros) {
+		window.sessionStorage.removeItem("token")
+		window.localStorage.removeItem("token")
+		botaren.token = null
+		manejarMensaje(parametros)
 	}
 
 	var manejarAcceso = function(cheveridad, parametros) {
@@ -124,6 +133,9 @@ var Botaren = function() {
 						product.width = 100
 						product.height = 100
 						product.alt = "imagen de jean"
+						product.onclick = function() {
+							fs(this)
+						}
 						columna.appendChild(product)
 
 						const price = document.createElement("button")
@@ -331,6 +343,9 @@ function mostrarCarro() {
 	product.width = 256
 	product.height = 256
 	product.alt = "imagen de jean"
+	product.onclick = function() {
+		fs(this)
+	}
 	contenedor.appendChild(product)
 
 	const enviador = document.createElement("button")
@@ -433,6 +448,25 @@ function uuidv4() {//https://stackoverflow.com/a/2117523
 	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
 		(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 	)
+}
+
+function fs(imagen) {
+	if(document.fullscreenElement != null || document.webkitFullscreenElement != null) {
+		if (document.exitFullscreen) {
+			document.exitFullscreen()
+		}
+		else {
+			document.webkitCancelFullScreen()
+		}
+	}
+	else {
+		if(imagen.requestFullscreen) {
+			imagen.requestFullscreen()
+		}
+		else {
+			imagen.webkitRequestFullScreen()
+		}
+	}
 }
 
 window.onload = function() {

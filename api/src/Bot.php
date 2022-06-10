@@ -43,7 +43,7 @@ class Bot implements MessageComponentInterface {
 			catch(\Exception $e) {
 				$respuesta['action'] = 600;
 				$respuesta['cheveridad'] = false;
-				$respuesta['params']['info'] = 'Token de sesión modificado.';
+				$respuesta['params']['texto'] = 'Token de sesión modificado.';
 
 				$from->send( json_encode( $respuesta ) );
 				return;
@@ -293,6 +293,12 @@ class Bot implements MessageComponentInterface {
 	}
 
 	private function comprar(&$datos, &$token, &$from, $respuesta) {
+		if( is_null( $token ) ) {
+			$respuesta['cheveridad'] = false;
+			$respuesta['params']['texto'] = 'Debes iniciar sesión.';
+			$from->send( json_encode( $respuesta ) );
+			return;
+		}
 		$sentenciaInsertadora = $this->bd->prepare('INSERT INTO ventarapida VALUES(0, 0, ?, ?, UNIX_TIMESTAMP(NOW()), 0, 1)');
 		$sentenciaInsertadora->bind_param('ii', $token->uid, $datos['params']['producto']);
 		$sentenciaInsertadora->execute();
