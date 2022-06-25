@@ -54,25 +54,25 @@ class Bot implements MessageComponentInterface {
 			//De menor que 0 al 999 son acciones de ida y vuelta.
 			//Del 1000 hacia arriba son asíncronas.
 			switch($datos['action']) {
-				case -2://REINGRESO presentando el token
+				case -2:
 					//Usado cuando se perdió la conexión, pero aún hay un token válido en uso y se añade en los vectores al usuario.
 					$this->reingresar($datos, $token, $from, $respuesta);
 					return;
-				case -1://CERRAR SESIÓN
+				case -1:
 					$this->cerrarSesion($datos, $token, $from, $respuesta);
 					return;
-				case 0://REGISTRAR
+				case 0:
 					$this->registrar($datos, $from, $respuesta);
 					return;
-				case 1://INICIAR SESIÓN
+				case 1:
 					$this->iniciarSesion($datos, $from, $respuesta);
 					break;
-				case 3://COMPRAR
+				case 3:
 					$this->comprar($datos, $token, $from, $respuesta);
 					break;
 				case 1000:
-					$queryResult = $this->detectIntentTexts( $datos, $token?->botkn);
-					$this->procesarSalida( $queryResult, $from, $respuesta );
+					$queryResult = $this->detectIntentTexts( $datos, $token->botkn??null);
+					$this->procesarSalida( $queryResult, $from, $respuesta, $token->uid??null );
 					return;
 				default:
 					$respuesta['cheveridad'] = false;
@@ -131,7 +131,7 @@ class Bot implements MessageComponentInterface {
 		}
 	}
 
-	private function procesarSalida( $queryResult, $from, &$respuesta ) {
+	private function procesarSalida( $queryResult, $from, &$respuesta, $tokenUid ) {
 		$intent = $queryResult->getIntent()->getDisplayName();
 		echo "\n$intent\n";
 		switch( $intent ) {
@@ -160,7 +160,31 @@ class Bot implements MessageComponentInterface {
 				}
 
 				$from->send( json_encode( $respuesta ) );
-				break;
+				return;
+			case 'bot.pedidos.busqueda.codigo':
+				$campos = json_decode( $queryResult->getParameters()->serializeToJsonString(), true );
+				var_dump($campos);
+				$estructura = $this->mostrarSeguimientos( $campos['pedido'], $tokenUid );
+				if($estructura == null ) {
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Ingresa más datos.';
+				}
+				else {
+					$cantidadDeSeguimientos = count($estructura);
+					if( $cantidadDeSeguimientos == 0 ) {
+						$respuesta['cheveridad'] = false;
+						$respuesta['params']['texto'] = 'No se hallaron pedidos.';
+					}
+					else {
+						$respuesta['cheveridad'] = true;
+						$respuesta['params']['anexo'] = 3;
+						$respuesta['params']['texto'] = $cantidadDeSeguimientos == 1 ? 'Un pedido hallado.' : 'Seguimientos hallados.';
+						$respuesta['params']['seguimientos'] = $estructura;
+					}
+				}
+
+				$from->send( json_encode( $respuesta ) );
+				return;
 			case 'smalltalk.greetings.hello':
 			default:
 				$respuesta['cheveridad'] = true;
@@ -256,8 +280,6 @@ class Bot implements MessageComponentInterface {
 			return;
 		}
 
-		//~ echo("Email y clave: $email, ***\n");
-
 		//Si hemos llegado hasta acá toca comparar los datos con los del registro obtenido
 		$usuario = $resultado->fetch_assoc();
 
@@ -315,6 +337,32 @@ class Bot implements MessageComponentInterface {
 			$respuesta['params']['texto'] = "Producto comprado con N° de transacción: $identidad.";
 		}
 		$from->send( json_encode( $respuesta ) );
+	}
+
+	private function mostrarSeguimientos( $pedido, $cliente ) {
+		$identidad = intval( $pedido );
+		if( $identidad <= 0 ) {
+			return null;
+		}
+
+		$sentenciaSeleccionadora = $this->bd->prepare('SELECT ventarapida.identidad, ventarapida.configuracion, _Jean, instante, estado, cantidad, precio FROM ventarapida INNER JOIN jean ON _Jean = jean.identidad WHERE identidad = ? AND _Cliente = ?');
+		$sentenciaSeleccionadora->bind_param('ii', $identidad, $cliente);
+		$sentenciaSeleccionadora->execute();
+		$resultado = $sentenciaSeleccionadora->get_result();
+		$sentenciaSeleccionadora->close();
+
+		$seguimientos = [];
+
+		if($resultado) {
+			//Ejecución correcta
+			$resultado = $sentenciaSeleccionadora->get_result();
+			while($fila = $resultado->fetch_assoc()) {
+				//Asignación de los campos consultados
+				$seguimientos[] = $fila;
+			}
+		}
+
+		return $seguimientos;
 	}
 }
 

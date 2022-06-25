@@ -148,6 +148,36 @@ var Botaren = function() {
 						columna.appendChild(price)
 					}
 					break
+				case 3:
+					const contenedor = document.createElement("div")
+					contenedor.setAttribute("class", "progressbar-wrapper clearfix")
+					receivedMessage.appendChild(contenedor)
+					for(let seguimiento of parametros.seguimientos) {
+						const identificacion = document.createElement("p")
+						identificacion.appendChild("Pedido N°: " + seguimiento.identidad)
+						const fila = document.createElement("ul")
+						fila.setAttribute("class", "progressbar")
+						contenedor.appendChild(fila)
+						const columnaR = document.createElement("li")
+						columnaR.appendChild(document.createTextNode("Reservado"))
+						const columnaP = document.createElement("li")
+						columnaP.appendChild(document.createTextNode("Pagado"))
+						const columnaE = document.createElement("li")
+						columnaE.appendChild(document.createTextNode("Entregado"))
+						if(seguimiento.estado > 0) {
+							columnaR.setAttribute("class", "active")
+						}
+						if(seguimiento.estado > 1) {
+							columnaP.setAttribute("class", "active")
+						}
+						if(seguimiento.estado > 2) {
+							columnaE.setAttribute("class", "active")
+						}
+						fila.appendChild(columnaR)
+						fila.appendChild(columnaP)
+						fila.appendChild(columnaE)
+					}
+					break
 		}
 
 		const text = document.createElement("p")
