@@ -1,0 +1,17 @@
+{
+	"icons": [
+		{
+			"src": "/img/bot.png",
+			"type": "image/png",
+			"sizes": "384x384"
+		}
+	],
+	"short_name": "Botaren",
+	"description": "Compra de jeans a través de un simple bot",
+	"start_url": "/",
+	"background_color": "#ebebeb",
+	"display": "standalone",
+	"scope": "/",
+	"theme_color": "#ebebeb",
+	"name": "Botaren - Empresa Zarga SAC."
+}

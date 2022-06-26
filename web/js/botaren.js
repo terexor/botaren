@@ -4,6 +4,47 @@ const CONEXION_INCONECTABLE = "Sin conexión con servidor."
 const CONEXION_CONECTABLE = "Estableciendo conexión\u2026"
 const WS_PORT = "666"
 
+//Para manejar el aviso de instalaciÃ³n
+let deferredPrompt = null
+const addBtn = document.getElementById("instalador")
+window.addEventListener('appinstalled', function(event) {
+	if(analisis) {
+		// Track event: The app was installed (banner or manual installation)
+		gtag("config", "UA-68444309-11", {"page_path": "/instalacion/2"})
+	}
+})
+window.addEventListener("beforeinstallprompt", function(e) {
+	e.preventDefault();
+	deferredPrompt = e;
+	if(addBtn.classList.contains("d-none")) {
+		addBtn.classList.remove("d-none")
+		const instalabilizador = document.getElementById("instalabilizador")
+		if(instalabilizador) {
+			instalabilizador.classList.remove("d-none")
+		}
+	}
+
+	addBtn.addEventListener("click", instalabilizar)
+})
+
+function instalabilizar(e) {
+	const instalabilizador = document.getElementById("instalabilizador")
+	if(instalabilizador) {
+		instalabilizador.classList.add("d-none")
+	}
+	addBtn.classList.add("d-none")
+	deferredPrompt.prompt()
+	deferredPrompt.userChoice.then(function(choiceResult) {
+		if(choiceResult.outcome === "accepted") {
+			Notiflix.Report.Success("Efectibit instalado", "Ahora estamos entre tus demÃ¡s aplicaciones.<br>Toca el Ã­cono del cerdo verde (Efectipig) para lanzar esta aplicaciÃ³n en cualquier momento.","Aceptar")
+		}
+		else {
+		    Notiflix.Notify.Warning("Te olvidaste instalarnos.")
+		}
+		deferredPrompt = null
+	})
+}
+
 var Botaren = function() {
 	console.log("Botarenizado")
 	var conn
@@ -24,6 +65,7 @@ var Botaren = function() {
 				break
 			case 3:
 				manejarCompra(respuesta.cheveridad, respuesta.params)
+				break
 			case 600:
 				manejarTokenAlterado(respuesta.params)
 				break
@@ -106,7 +148,7 @@ var Botaren = function() {
 		photo.setAttribute("class", "incoming_msg_img")
 		outgoingMessage.appendChild(photo)
 		const image = document.createElement("img")
-		image.src = "img/bot.jpg"
+		image.src = "img/bot.png"
 		image.alt = "bot"
 		photo.appendChild(image)
 		const message = document.createElement("div")
@@ -117,7 +159,7 @@ var Botaren = function() {
 		message.appendChild(receivedMessage)
 
 		switch(parametros.anexo) {
-			case 1:{
+			case 1: {
 				const contenedor = document.createElement("div")
 				contenedor.setAttribute("class", "container")
 				receivedMessage.appendChild(contenedor)
@@ -148,37 +190,46 @@ var Botaren = function() {
 						columna.appendChild(price)
 					}
 					break
-				}
-				case 3:
-					const contenedor = document.createElement("div")
-					contenedor.setAttribute("class", "progressbar-wrapper clearfix")
-					receivedMessage.appendChild(contenedor)
-					for(let seguimiento of parametros.seguimientos) {
-						const identificacion = document.createElement("p")
-						identificacion.appendChild("Pedido N°: " + seguimiento.identidad)
-						const fila = document.createElement("ul")
-						fila.setAttribute("class", "progressbar")
-						contenedor.appendChild(fila)
-						const columnaR = document.createElement("li")
-						columnaR.appendChild(document.createTextNode("Reservado"))
-						const columnaP = document.createElement("li")
-						columnaP.appendChild(document.createTextNode("Pagado"))
-						const columnaE = document.createElement("li")
-						columnaE.appendChild(document.createTextNode("Entregado"))
-						if(seguimiento.estado > 0) {
-							columnaR.setAttribute("class", "active")
-						}
-						if(seguimiento.estado > 1) {
-							columnaP.setAttribute("class", "active")
-						}
-						if(seguimiento.estado > 2) {
-							columnaE.setAttribute("class", "active")
-						}
-						fila.appendChild(columnaR)
-						fila.appendChild(columnaP)
-						fila.appendChild(columnaE)
+			}	
+			case 3: {
+				for(let seguimiento of parametros.seguimientos) {
+					const contenedorPedido = document.createElement("div")
+					const contenedorEstado = document.createElement("div")
+					contenedorEstado.setAttribute("class", "progressbar-wrapper clearfix")
+					console.log(seguimiento.instante)
+					const identificacion = document.createElement("p")
+					identificacion.appendChild(document.createTextNode("Pedido N°: " + seguimiento.identidad))
+					identificacion.appendChild(document.createElement("br"))
+					identificacion.appendChild(document.createTextNode("Fecha: " + imprimirFecha(new Date(seguimiento.instante*1000), true)))
+					const fila = document.createElement("ul")
+					fila.setAttribute("class", "progressbar")
+					contenedorEstado.appendChild(fila)
+					const columnaR = document.createElement("li")
+					columnaR.appendChild(document.createTextNode("Reservado"))
+					const columnaP = document.createElement("li")
+					columnaP.appendChild(document.createTextNode("Pagado"))
+					const columnaE = document.createElement("li")
+					columnaE.appendChild(document.createTextNode("Entregado"))
+					if(seguimiento.estado == 0) {
+						columnaR.setAttribute("class", "active")
 					}
-					break
+					if(seguimiento.estado == 1) {
+						columnaP.setAttribute("class", "active")
+					}
+					if(seguimiento.estado > 1) {
+						columnaE.setAttribute("class", "active")
+					}
+					fila.appendChild(columnaR)
+					fila.appendChild(columnaP)
+					fila.appendChild(columnaE)
+					const contenedorDetalle = document.createElement("div")
+					contenedorDetalle.appendChild(identificacion)
+					contenedorPedido.appendChild(contenedorEstado)
+					contenedorPedido.appendChild(contenedorDetalle)
+					receivedMessage.appendChild(contenedorPedido)
+				    }
+				    break
+			}
 		}
 
 		const text = document.createElement("p")
@@ -395,6 +446,12 @@ function mostrarPerfil() {
 		contenedor.firstChild.remove()
 	}
 
+	const logotipo = document.createElement("img")
+	logotipo.src = "img/bot.png"
+	logotipo.alt = "Botaren"
+	logotipo.width = "200"
+	contenedor.appendChild(logotipo)
+
 	if(botaren.token) {
 		const datos = parseJwt(botaren.token)
 
@@ -422,41 +479,34 @@ function mostrarPerfil() {
 	grupoEmail.setAttribute("class", "form-group")
 	formulario.appendChild(grupoEmail)
 
-	const etiquetaEmail = document.createElement("label")
-	etiquetaEmail.for = "nuntii"
-	etiquetaEmail.appendChild(document.createTextNode("Email:"))
-	grupoEmail.appendChild(etiquetaEmail)
-
 	const entradaEmail = document.createElement("input")
 	entradaEmail.type = "email"
 	entradaEmail.name = "email"
-	entradaEmail.setAttribute("class", "form-control")
+	entradaEmail.setAttribute("class", "form-control bg-white")
 	entradaEmail.setAttribute("id", "nuntii")
 	entradaEmail.placeholder = "Correo electrónico"
 	grupoEmail.appendChild(entradaEmail)
 
 	const grupoClave = document.createElement("div")
-	grupoClave.setAttribute("class", "form-group")
+	grupoClave.setAttribute("class", "form-group bg-white")
 	formulario.appendChild(grupoClave)
-
-	const etiquetaClave = document.createElement("label")
-	etiquetaClave.for = "clavis"
-	etiquetaClave.appendChild(document.createTextNode("Clave:"))
-	grupoClave.appendChild(etiquetaClave)
 
 	const entradaClave = document.createElement("input")
 	entradaClave.type = "password"
 	entradaClave.name = "clave"
-	entradaClave.setAttribute("class", "form-control")
+	entradaClave.setAttribute("class", "form-control bg-white")
 	entradaClave.setAttribute("id", "clavis")
 	entradaClave.placeholder = "Contraseña"
 	grupoClave.appendChild(entradaClave)
 
 	const enviador = document.createElement("button")
 	enviador.type = "submit"
-	enviador.setAttribute("class", "btn btn-success btn-lg btn-block mt-2")
-	enviador.appendChild(document.createTextNode("Acceder"))
+	enviador.setAttribute("class", "btn btn-primary btn-lg btn-block mt-2")
+	enviador.appendChild(document.createTextNode("Iniciar Sesión"))
 	formulario.appendChild(enviador)
+
+	const mensaje = document.createElement("p")
+	mensaje.appendChild(document.createTextNode("© 2022 - Botaren - Empresa Zarga SAC."))
 }
 
 function parseJwt(token) {
@@ -506,4 +556,42 @@ window.onload = function() {
 	if(esRemoto) {
 		botaren.enlazar()
 	}
+if("serviceWorker" in navigator) {
+	navigator.serviceWorker.register("/service-worker.js").then(function(registro) {
+		registro.onupdatefound = function() {
+			let installingWorker = registro.installing;
+			installingWorker.onstatechange = function() {
+				switch (installingWorker.state) {
+					case "installed":
+						if(navigator.serviceWorker.controller) {
+							console.log("Contenido nuevo o actualizado estÃ¡ disponible.")
+						}
+						else {
+							console.log("El contenido estÃ¡ ahora disponible offline.")
+						}
+						break
+
+					case "redundant":
+						console.error("Se estÃ¡ repitiendo la instalaciÃ³n del service worker.")
+						break
+					}
+				};
+		}
+		console.log("SW Registrao")
+	}).catch(function(e) {
+		console.error("Error durante registro de SW:", e)
+	})
+
+	navigator.serviceWorker.addEventListener("message", event => {
+		switch(event.data.action) {
+			case "browse":
+				app.navigate( event.data.url )
+				break
+		}
+	})
 }
+}
+
+
+
+// Auspiciado por efectibit.com y terexor.com
