@@ -141,7 +141,7 @@ class Bot implements MessageComponentInterface {
 				//~ var_dump( $campos );
 				$estructura = $this->mostrarProductos( $campos['producto-modelo'], $campos['talla'], $campos['color'] );
 
-				if($estructura == null) {
+				if($estructura === null) {
 					$respuesta['cheveridad'] = false;
 					$respuesta['params']['texto'] = 'Ingresa más datos.';
 				}
@@ -154,7 +154,7 @@ class Bot implements MessageComponentInterface {
 					else {
 						$respuesta['cheveridad'] = true;
 						$respuesta['params']['anexo'] = 1;
-						$respuesta['params']['texto'] = $cantidadDeProductos == 1 ? 'Encontré este jean.' : 'Se hallaron estos jeans.';
+						$respuesta['params']['texto'] = $cantidadDeProductos == 1 ? 'Encontré este jean, para más detalle seleccione sobre la imagen del jean. Seleccione el que desea pedir y automáticamente se agregará al carrito.' : 'Se hallaron estos jeans. Seleccione el que desea pedir y automáticamente se agregará al carrito.';
 						$respuesta['params']['productos'] = $estructura;
 					}
 				}
@@ -240,7 +240,7 @@ class Bot implements MessageComponentInterface {
 		$clave = $datos['params']['password'];
 
 		//Se busca en la base de datos
-		$sentenciaSeleccionadora = $this->bd->prepare('SELECT identidad, configuracion, hash, nombre, documento FROM Cliente WHERE email = ? LIMIT 1');
+		$sentenciaSeleccionadora = $this->bd->prepare('SELECT identidad, configuracion, hash, nombre, documento FROM cliente WHERE email = ? LIMIT 1');
 		$sentenciaSeleccionadora->bind_param('s', $email);
 		$sentenciaSeleccionadora->execute();
 		$resultado = $sentenciaSeleccionadora->get_result();
@@ -306,13 +306,13 @@ class Bot implements MessageComponentInterface {
 		//Si no se insertó entonces no debe haber ninguna fila
 		$identidad = $this->bd->insert_id;
 
-		if($identidad == 0) {
+		if($identidad === 0) {
 			$respuesta['cheveridad'] = false;
 			$respuesta['params']['texto'] = 'No se pudo registrar compra.';
 		}
 		else {
 			$respuesta['cheveridad'] = true;
-			$respuesta['params']['texto'] = "Producto comprado con N° de transacción: $identidad.";
+			$respuesta['params']['texto'] = "Producto pedido con N° de transacción: $identidad. En la próxima hora se debe hacer el deposito de S/ 75 por Yape al siguiente número +51 987 123 455 o a la siguiente cuenta bancaría BCP 4598 8765 1238 8712";
 		}
 		$from->send( json_encode( $respuesta ) );
 	}
