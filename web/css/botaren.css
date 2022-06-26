@@ -1,60 +1,57 @@
 .sidebar {
-  height: 100%;
-/*
-  width: 0;
-*/
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  background-color:#dadada;
-  overflow-x: hidden;
-  transition: 0.5s;
-  padding-top: 60px;
+	height: 100%;
+	position: fixed;
+	z-index: 1;
+	top: 0;
+	left: 0;
+	background-color:#dadada;
+	overflow-x: hidden;
+	transition: 0.5s;
+	padding-top: 60px;
 }
 
 .sidebar a {
-  padding: 8px 8px 8px 32px;
-  text-decoration: none;
-  font-size: 25px;
-  color: #818181;
-  display: block;
-  transition: 0.3s;
+	padding: 8px 8px 8px 32px;
+	text-decoration: none;
+	font-size: 25px;
+	color: #818181;
+	display: block;
+	transition: 0.3s;
 }
 
 .sidebar a:hover {
-  color: #f1f1f1;
+	color: #f1f1f1;
 }
 
 .sidebar .closebtn {
-  position: absolute;
-  top: 0;
-  right: 25px;
-  font-size: 36px;
-  margin-left: 50px;
+	position: absolute;
+	top: 0;
+	right: 25px;
+	font-size: 36px;
+	margin-left: 50px;
 }
 
 .openbtn {
-  font-size: 20px;
-  cursor: pointer;
-  background-color: #111;
-  color: white;
-  padding: 10px 15px;
-  border: none;
+	font-size: 20px;
+	cursor: pointer;
+	background-color: #111;
+	color: white;
+	padding: 10px 15px;
+	border: none;
 }
 
 .openbtn:hover {
-  background-color: #444;
+	background-color: #444;
 }
 
 #main {
-  transition: margin-left .5s;
+	transition: margin-left .5s;
 }
 
 /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
 @media screen and (max-height: 450px) {
-  .sidebar {padding-top: 15px;}
-  .sidebar a {font-size: 18px;}
+	.sidebar {padding-top: 15px;}
+	.sidebar a {font-size: 18px;}
 }
 /*
 .container{max-width:100%; margin:auto;}
@@ -165,4 +162,63 @@ img{ max-width:100%;}
 .msg_history {
 	height: 516px;
 	overflow-y: auto;
+}
+
+/*Pasos*/
+.progressbar-wrapper {
+	background: #fff;
+	width: 100%;
+	padding-top: 10px;
+	padding-bottom: 5px;
+}
+
+.progressbar li {
+	list-style-type: none;
+	width: 20%;
+	float: left;
+	font-size: 12px;
+	position: relative;
+	text-align: center;
+	text-transform: uppercase;
+	color: #7d7d7d;
+}
+
+.progressbar li:before {
+	width: 60px;
+	height: 60px;
+	content: "";
+	line-height: 60px;
+	border: 2px solid #7d7d7d;
+	display: block;
+	text-align: center;
+	margin: 0 auto 3px auto;
+	border-radius: 50%;
+	position: relative;
+	z-index: 2;
+	background-color: #fff;
+}
+.progressbar li:after {
+	width: 100%;
+	height: 2px;
+	content: '';
+	position: absolute;
+	background-color: #7d7d7d;
+	top: 30px;
+	left: -50%;
+	z-index: 0;
+}
+
+.progressbar li:first-child:after {
+	content: none;
+}
+.progressbar li.active {
+	color: green;
+	font-weight: bold;
+}
+	.progressbar li.active:before {
+	border-color: #55b776;
+	background: green;
+}
+.progressbar li.active + li:after {
+	background-color: #55b776;
 }
