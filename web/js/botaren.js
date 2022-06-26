@@ -117,7 +117,7 @@ var Botaren = function() {
 		message.appendChild(receivedMessage)
 
 		switch(parametros.anexo) {
-			case 1:
+			case 1:{
 				const contenedor = document.createElement("div")
 				contenedor.setAttribute("class", "container")
 				receivedMessage.appendChild(contenedor)
@@ -148,6 +148,7 @@ var Botaren = function() {
 						columna.appendChild(price)
 					}
 					break
+				}
 				case 3:
 					const contenedor = document.createElement("div")
 					contenedor.setAttribute("class", "progressbar-wrapper clearfix")

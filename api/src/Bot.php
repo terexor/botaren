@@ -162,9 +162,15 @@ class Bot implements MessageComponentInterface {
 				$from->send( json_encode( $respuesta ) );
 				return;
 			case 'bot.pedidos.busqueda.codigo':
+				if($tokenUid === null){
+				    $respuesta['cheveridad'] = false;
+				    $respuesta['params']['texto'] = 'Debes iniciar sesión.';
+				    $from->send( json_encode( $respuesta ) );
+				    return;
+				}
 				$campos = json_decode( $queryResult->getParameters()->serializeToJsonString(), true );
 				var_dump($campos);
-				$estructura = $this->mostrarSeguimientos( $campos['pedido'], $tokenUid );
+				$estructura = $this->mostrarSeguimientos( $campos['identidadPedido'], $tokenUid );
 				if($estructura == null ) {
 					$respuesta['cheveridad'] = false;
 					$respuesta['params']['texto'] = 'Ingresa más datos.';
@@ -185,6 +191,61 @@ class Bot implements MessageComponentInterface {
 
 				$from->send( json_encode( $respuesta ) );
 				return;
+			case 'bot.pedidos.busqueda.fechas':
+				if($tokenUid === null){
+				    $respuesta['cheveridad'] = false;
+				    $respuesta['params']['texto'] = 'Debes iniciar sesión.';
+				    $from->send( json_encode( $respuesta ) );
+				    return;
+				}
+				$campos = json_decode( $queryResult->getParameters()->serializeToJsonString(), true );
+				var_dump($campos);
+				$estructura = $this->mostrarSeguimientos( null, $tokenUid, $campos['fechaInicio'], $campos['fechaFin'], $campos['fecha'] );
+				
+				if($estructura === null ) {
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Ingresa más datos.';
+				}
+				else {
+					$cantidadDeSeguimientos = count($estructura);
+					if( $cantidadDeSeguimientos == 0 ) {
+						$respuesta['cheveridad'] = false;
+						$respuesta['params']['texto'] = 'No se hallaron pedidos.';
+					}
+					else {
+						$respuesta['cheveridad'] = true;
+						$respuesta['params']['anexo'] = 3;
+						$respuesta['params']['texto'] = $cantidadDeSeguimientos == 1 ? 'Un pedido hallado.' : 'Seguimientos hallados.';
+						$respuesta['params']['seguimientos'] = $estructura;
+					}
+				}
+
+				$from->send( json_encode( $respuesta ) );
+				return;
+			case 'bot.pedidos.confirmacion':
+			case 'bot.pedidos.entregado':
+				if($tokenUid === null){
+				    $respuesta['cheveridad'] = false;
+				    $respuesta['params']['texto'] = 'Debes iniciar sesión.';
+				    $from->send( json_encode( $respuesta ) );
+				    return;
+				}
+
+				$estado = $this->actualizarEstadoSeguimiento($intent == 'bot.pedidos.confirmacion' ? 1 : 2, $tokenUid);
+
+				if ($estado > 0){
+				    $respuesta['cheveridad'] = true;
+				    $respuesta['params']['texto'] = $queryResult->getFulfillmentText();
+				} elseif( $estado == 0){
+				    $respuesta['cheveridad'] = false;
+				    $respuesta['params']['texto'] = 'No se pudo actualizar nada.';
+				} elseif( $estado == 0){
+				    $respuesta['cheveridad'] = false;
+				    $respuesta['params']['texto'] = 'Está díficil cambiarlo.'; 
+				}
+				$from->send( json_encode( $respuesta ) );
+				return;
+
 			case 'smalltalk.greetings.hello':
 			default:
 				$respuesta['cheveridad'] = true;
@@ -339,17 +400,28 @@ class Bot implements MessageComponentInterface {
 		$from->send( json_encode( $respuesta ) );
 	}
 
-	private function mostrarSeguimientos( $pedido, $cliente ) {
-		$identidad = intval( $pedido );
-		if( $identidad <= 0 ) {
-			return null;
-		}
+	private function mostrarSeguimientos( $pedido, $cliente, $fechaInicio=null, $fechaFin=null, $fecha=null ) {
+		if( $pedido != null){
+			$identidad = intval( $pedido );
+			var_dump($identidad);
+			if( $identidad <= 0 ) {
+				return null;
+			}
 
-		$sentenciaSeleccionadora = $this->bd->prepare('SELECT ventarapida.identidad, ventarapida.configuracion, _Jean, instante, estado, cantidad, precio FROM ventarapida INNER JOIN jean ON _Jean = jean.identidad WHERE identidad = ? AND _Cliente = ?');
-		$sentenciaSeleccionadora->bind_param('ii', $identidad, $cliente);
-		$sentenciaSeleccionadora->execute();
-		$resultado = $sentenciaSeleccionadora->get_result();
-		$sentenciaSeleccionadora->close();
+			$sentenciaSeleccionadora = $this->bd->prepare('SELECT ventarapida.identidad, ventarapida.configuracion, _Jean, instante, estado, ventarapida.cantidad, precio FROM ventarapida INNER JOIN jean ON _Jean = jean.identidad WHERE ventarapida.identidad = ? AND _Cliente = ?');
+			$sentenciaSeleccionadora->bind_param('ii', $identidad, $cliente);
+		}
+		else{
+			$fechaInicio = strtotime($fechaInicio) - 39600;
+			$fechaFin = strtotime($fechaFin) + 46800;
+			$fechaUnicaInicio = strtotime($fecha) - 39600;
+			$fechaUnicaFin = $fechaUnicaInicio + 86400;
+			var_dump($fechaInicio, $fechaFin, $fechaUnicaInicio, $fechaUnicaFin);
+			$sentenciaSeleccionadora = $this->bd->prepare('SELECT ventarapida.identidad, ventarapida.configuracion, _Jean, instante, estado, ventarapida.cantidad, precio FROM ventarapida INNER JOIN jean ON _Jean = jean.identidad WHERE _Cliente = ? AND ((instante >= ? AND instante <= ? ) OR (instante >= ? AND instante <= ? )) ORDER BY ventarapida.identidad');
+			$sentenciaSeleccionadora->bind_param('iiiii', $cliente, $fechaInicio, $fechaFin, $fechaUnicaInicio, $fechaUnicaFin);
+
+		}
+		$resultado = $sentenciaSeleccionadora->execute();
 
 		$seguimientos = [];
 
@@ -362,8 +434,17 @@ class Bot implements MessageComponentInterface {
 			}
 		}
 
+		$sentenciaSeleccionadora->close();
 		return $seguimientos;
 	}
+
+	private function actualizarEstadoSeguimiento( $estado, $cliente ){
+	    $sentenciaActualizadora = $this->bd->prepare('UPDATE ventarapida set estado = ? WHERE _Cliente = ? ORDER BY identidad DESC LIMIT 1');
+	    $sentenciaActualizadora->bind_param('ii', $estado, $cliente);
+	    $resultado = $sentenciaActualizadora->execute();
+	    return $resultado;
+	}
+
 }
 
 function _color( $color ) {
