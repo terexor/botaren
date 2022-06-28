@@ -216,10 +216,23 @@ img{ max-width:100%;}
 	color: green;
 	font-weight: bold;
 }
-	.progressbar li.active:before {
+.progressbar li.active:before {
 	border-color: #55b776;
 	background: green;
 }
 .progressbar li.active + li:after {
 	background-color: #55b776;
+}
+@media screen and (max-width:555px) {
+	.progressbar li {
+		font-size: 10px;
+	}
+	.progressbar li:before {
+		width: 30px;
+		height: 30px;
+		line-height: 30px;
+	}
+	.progressbar li:after {
+		top: 15px;
+	}
 }

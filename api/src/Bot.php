@@ -15,6 +15,7 @@ class Bot implements MessageComponentInterface {
 		$this->sessionsClient = new SessionsClient( array('credentials' => $dialogflowSecretPath) );
 		$this->sessionDialogflow = $dialogflowToken;
 		$this->bd = new \mysqli($credentials['host'], $credentials['user'], $credentials['password'], $credentials['db']);
+		$this->credentials = $credentials;
 		echo("Bot encendido.\n");
 	}
 
@@ -48,6 +49,12 @@ class Bot implements MessageComponentInterface {
 				$from->send( json_encode( $respuesta ) );
 				return;
 			}
+		}
+
+		if( ! $this->bd->ping() ) {
+			$this->bd->close();
+			$this->bd = new \mysqli();
+			$this->bd->real_connect($this->credentials['host'], $this->credentials['user'], $this->credentials['password'], $this->credentials['db']);
 		}
 
 		try {
@@ -163,10 +170,10 @@ class Bot implements MessageComponentInterface {
 				return;
 			case 'bot.pedidos.busqueda.codigo':
 				if($tokenUid === null){
-				    $respuesta['cheveridad'] = false;
-				    $respuesta['params']['texto'] = 'Debes iniciar sesión.';
-				    $from->send( json_encode( $respuesta ) );
-				    return;
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Debes iniciar sesión.';
+					$from->send( json_encode( $respuesta ) );
+					return;
 				}
 				$campos = json_decode( $queryResult->getParameters()->serializeToJsonString(), true );
 				var_dump($campos);
@@ -193,15 +200,15 @@ class Bot implements MessageComponentInterface {
 				return;
 			case 'bot.pedidos.busqueda.fechas':
 				if($tokenUid === null){
-				    $respuesta['cheveridad'] = false;
-				    $respuesta['params']['texto'] = 'Debes iniciar sesión.';
-				    $from->send( json_encode( $respuesta ) );
-				    return;
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Debes iniciar sesión.';
+					$from->send( json_encode( $respuesta ) );
+					return;
 				}
 				$campos = json_decode( $queryResult->getParameters()->serializeToJsonString(), true );
 				var_dump($campos);
 				$estructura = $this->mostrarSeguimientos( null, $tokenUid, $campos['fechaInicio'], $campos['fechaFin'], $campos['fecha'] );
-				
+
 				if($estructura === null ) {
 					$respuesta['cheveridad'] = false;
 					$respuesta['params']['texto'] = 'Ingresa más datos.';
@@ -225,23 +232,23 @@ class Bot implements MessageComponentInterface {
 			case 'bot.pedidos.confirmacion':
 			case 'bot.pedidos.entregado':
 				if($tokenUid === null){
-				    $respuesta['cheveridad'] = false;
-				    $respuesta['params']['texto'] = 'Debes iniciar sesión.';
-				    $from->send( json_encode( $respuesta ) );
-				    return;
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Debes iniciar sesión.';
+					$from->send( json_encode( $respuesta ) );
+					return;
 				}
 
 				$estado = $this->actualizarEstadoSeguimiento($intent == 'bot.pedidos.confirmacion' ? 1 : 2, $tokenUid);
 
 				if ($estado > 0){
-				    $respuesta['cheveridad'] = true;
-				    $respuesta['params']['texto'] = $queryResult->getFulfillmentText();
+					$respuesta['cheveridad'] = true;
+					$respuesta['params']['texto'] = $queryResult->getFulfillmentText();
 				} elseif( $estado == 0){
-				    $respuesta['cheveridad'] = false;
-				    $respuesta['params']['texto'] = 'No se pudo actualizar nada.';
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'No se pudo actualizar nada.';
 				} elseif( $estado == 0){
-				    $respuesta['cheveridad'] = false;
-				    $respuesta['params']['texto'] = 'Está díficil cambiarlo.'; 
+					$respuesta['cheveridad'] = false;
+					$respuesta['params']['texto'] = 'Está díficil cambiarlo.';
 				}
 				$from->send( json_encode( $respuesta ) );
 				return;
@@ -273,11 +280,11 @@ class Bot implements MessageComponentInterface {
 		}
 
 		foreach($tallas as $talla) {
-		    $sTallas[] = intval($talla);
+			$sTallas[] = intval($talla);
 		}
 
 		foreach($modelos as $modelo) {
-		    $sModelos[] = $modelo;
+			$sModelos[] = $modelo;
 		}
 
 		$inColores  = str_repeat('?,', count($sColores) - 1) . '?';
@@ -411,7 +418,7 @@ class Bot implements MessageComponentInterface {
 			$sentenciaSeleccionadora = $this->bd->prepare('SELECT ventarapida.identidad, ventarapida.configuracion, _Jean, instante, estado, ventarapida.cantidad, precio FROM ventarapida INNER JOIN jean ON _Jean = jean.identidad WHERE ventarapida.identidad = ? AND _Cliente = ?');
 			$sentenciaSeleccionadora->bind_param('ii', $identidad, $cliente);
 		}
-		else{
+		else {
 			$fechaInicio = strtotime($fechaInicio) - 39600;
 			$fechaFin = strtotime($fechaFin) + 46800;
 			$fechaUnicaInicio = strtotime($fecha) - 39600;
@@ -419,7 +426,6 @@ class Bot implements MessageComponentInterface {
 			var_dump($fechaInicio, $fechaFin, $fechaUnicaInicio, $fechaUnicaFin);
 			$sentenciaSeleccionadora = $this->bd->prepare('SELECT ventarapida.identidad, ventarapida.configuracion, _Jean, instante, estado, ventarapida.cantidad, precio FROM ventarapida INNER JOIN jean ON _Jean = jean.identidad WHERE _Cliente = ? AND ((instante >= ? AND instante <= ? ) OR (instante >= ? AND instante <= ? )) ORDER BY ventarapida.identidad');
 			$sentenciaSeleccionadora->bind_param('iiiii', $cliente, $fechaInicio, $fechaFin, $fechaUnicaInicio, $fechaUnicaFin);
-
 		}
 		$resultado = $sentenciaSeleccionadora->execute();
 
@@ -438,13 +444,63 @@ class Bot implements MessageComponentInterface {
 		return $seguimientos;
 	}
 
-	private function actualizarEstadoSeguimiento( $estado, $cliente ){
-	    $sentenciaActualizadora = $this->bd->prepare('UPDATE ventarapida set estado = ? WHERE _Cliente = ? ORDER BY identidad DESC LIMIT 1');
-	    $sentenciaActualizadora->bind_param('ii', $estado, $cliente);
-	    $resultado = $sentenciaActualizadora->execute();
-	    return $resultado;
+	private function actualizarEstadoSeguimiento( $estado, $cliente ) {
+		$sentenciaActualizadora = $this->bd->prepare('UPDATE ventarapida set estado = ? WHERE _Cliente = ? ORDER BY identidad DESC LIMIT 1');
+		$sentenciaActualizadora->bind_param('ii', $estado, $cliente);
+		$resultado = $sentenciaActualizadora->execute();
+		return $resultado;
 	}
 
+	private function registrar($datos, $from, $respuesta) {
+		$email = strtolower( $datos['params']['email'] );
+		if( false === filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
+			$respuesta['cheveridad'] = false;
+			$respuesta['params']['info'] = 'Correo electrónico inválido.';
+			$from->send( json_encode( $respuesta ) );
+			return;
+		}
+
+		$clave = $datos['params']['password'];
+
+		//Se crea el hash
+		$hash = password_hash($clave, PASSWORD_DEFAULT);
+		//~ $nombre = $datos['params']['nombre'];
+		$nombre = ucfirst( substr($email, 0, strrpos($email, '@')) );
+		$documento = '01234568';
+
+		$sentenciaInsertadora = $this->bd->prepare('INSERT INTO cliente(hash, email, nombre, documento) VALUES(?, ?, ?, ?)');
+		$sentenciaInsertadora->bind_param('ssss', $hash, $email, $nombre, $documento);
+		$resultado = $sentenciaInsertadora->execute();
+		if( $this->db->errno == 1062 ) {
+			$respuesta['cheveridad'] = false;
+			$respuesta['params']['info'] = 'Correo electrónico ya usado.';
+			$from->send( json_encode( $respuesta ) );
+			return;
+		}
+
+		//Si no se insertó entonces no debe haber ninguna fila
+		$afecto = $this->bd->affected_rows;
+		var_dump($afecto);
+		if($afecto < 0) {
+			$respuesta['cheveridad'] = false;
+			$respuesta['params']['info'] = 'Parece que ya existe una cuenta.';
+			$from->send( json_encode( $respuesta ) );
+			return;
+		}
+		else {
+			$identidad = $this->bd->insert_id;
+			$recordarlo = isset( $datos['params']['persistencia'] ) && $datos['params']['persistencia'];
+			$respuesta['cheveridad'] = true;
+			//Se obtiene un token
+			$datos['email'] = $email;
+			$datos['uid'] = $identidad;
+			$datos['alias'] = $nombre;
+			$datos['botkn'] = hash_hmac("sha256", $email, '8==D && 0 > 1 > 2');
+			$datos['tiempo'] = $recordarlo ? time() + 31104000 : 86400;//Agregar más tiempo si hay persistencia
+			$respuesta['params']['token'] = JWT::encode($datos, CLAVE_JWT);
+			$from->send(json_encode($respuesta));
+		}
+	}
 }
 
 function _color( $color ) {

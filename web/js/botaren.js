@@ -60,6 +60,7 @@ var Botaren = function() {
 		let respuesta = JSON.parse(e.data)
 
 		switch(respuesta.action) {
+			case 0:
 			case 1:
 				manejarAcceso(respuesta.cheveridad, respuesta.params)
 				break
@@ -190,7 +191,7 @@ var Botaren = function() {
 						columna.appendChild(price)
 					}
 					break
-			}	
+			}
 			case 3: {
 				for(let seguimiento of parametros.seguimientos) {
 					const contenedorPedido = document.createElement("div")
@@ -350,7 +351,7 @@ var Botaren = function() {
 		historial.scrollTo(0, historial.scrollHeight);
 	}
 
-	this.acceder = function(formulario) {
+	this.acceder = function(formulario, accion = 1) {
 		if(conn.readyState != WebSocket.OPEN) {
 			Notiflix.Notify.Failure(CONEXION_INCONECTABLE)
 			return
@@ -359,7 +360,7 @@ var Botaren = function() {
 		formulario.elements.email.blur()
 		formulario.elements.clave.blur()
 		const credencial = new Object()
-		credencial.action = 1
+		credencial.action = accion
 		credencial.params = {
 			email: formulario.elements.email.value.trim().toLowerCase(),
 			password: formulario.elements.clave.value.trim(),
@@ -469,6 +470,7 @@ function mostrarPerfil() {
 	}
 
 	const formulario = document.createElement("form")
+	formulario.setAttribute("class", "mb-1")
 	formulario.onsubmit = function() {
 		botaren.acceder(this)
 		return false
@@ -482,7 +484,7 @@ function mostrarPerfil() {
 	const entradaEmail = document.createElement("input")
 	entradaEmail.type = "email"
 	entradaEmail.name = "email"
-	entradaEmail.setAttribute("class", "form-control bg-white")
+	entradaEmail.setAttribute("class", "form-control bg-white p-1")
 	entradaEmail.setAttribute("id", "nuntii")
 	entradaEmail.placeholder = "Correo electrónico"
 	grupoEmail.appendChild(entradaEmail)
@@ -494,7 +496,7 @@ function mostrarPerfil() {
 	const entradaClave = document.createElement("input")
 	entradaClave.type = "password"
 	entradaClave.name = "clave"
-	entradaClave.setAttribute("class", "form-control bg-white")
+	entradaClave.setAttribute("class", "form-control bg-white p-1")
 	entradaClave.setAttribute("id", "clavis")
 	entradaClave.placeholder = "Contraseña"
 	grupoClave.appendChild(entradaClave)
@@ -505,8 +507,18 @@ function mostrarPerfil() {
 	enviador.appendChild(document.createTextNode("Iniciar Sesión"))
 	formulario.appendChild(enviador)
 
-	const mensaje = document.createElement("p")
-	mensaje.appendChild(document.createTextNode("© 2022 - Botaren - Empresa Zarga SAC."))
+	const registrador = document.createElement("button")
+	registrador.type = "button"
+	registrador.setAttribute("class", "btn btn-info btn-lg btn-block mt-2")
+	registrador.appendChild(document.createTextNode("Registrar"))
+	registrador.onclick = function() {
+		botaren.acceder(formulario, 0)
+	}
+	formulario.appendChild(registrador)
+
+	const derechos = document.createElement("p")
+	derechos.appendChild(document.createTextNode("© 2022 - Botaren - Empresa Zarga SAC."))
+	contenedor.appendChild(derechos)
 }
 
 function parseJwt(token) {
